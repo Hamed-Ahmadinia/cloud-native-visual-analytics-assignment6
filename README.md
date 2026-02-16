@@ -1,308 +1,163 @@
-Cloud Native Visual Analytics — Assignment 6
+# Cloud Native Visual Analytics 
 
-Overview
+Cloud-native visual analytics pipeline built using **ClickHouse** and **Grafana**, deployed on **CSC Rahti OpenShift**.
 
+---
 
+## 📌 Overview
 
-This project documents the implementation of a cloud-native visual analytics pipeline using ClickHouse and Grafana deployed on CSC Rahti OpenShift. The assignment demonstrates how to deploy database and visualization services in a containerized environment, import datasets, execute analytical SQL queries, and create interactive dashboards.
+This project documents the implementation of a cloud-native database and visualization stack inside OpenShift. The goal of the assignment was to deploy analytical services in a containerized environment, import datasets into a high-performance columnar database, and create interactive dashboards with meaningful aggregations and derived metrics.
 
+The assignment demonstrates:
 
+- Deploying ClickHouse using OpenShift YAML
+- Deploying Grafana in the same OpenShift App/network
+- Importing datasets into ClickHouse
+- Configuring Grafana data source using internal service networking
+- Building analytical dashboards with SQL aggregations and advanced metrics
 
-The goal was to:
+---
 
+## 🏗 Architecture
 
+The system was deployed inside CSC Rahti OpenShift using the following architecture:
 
-Deploy ClickHouse using OpenShift YAML
+OpenShift Project  
+&nbsp;&nbsp;&nbsp;&nbsp;├── ClickHouse (Database)  
+&nbsp;&nbsp;&nbsp;&nbsp;└── Grafana (Visualization)  
 
+Both services run inside the same OpenShift **App**, allowing internal service communication via Kubernetes service DNS.
 
+---
 
-Deploy Grafana in the same OpenShift App/network
+## 📊 Datasets Used
 
+### 1️⃣ Movies Dataset (Main Assignment)
 
+Metacritic movies dataset imported into ClickHouse.
 
-Import datasets into ClickHouse
+Used for:
 
+- Movies per year
+- Average metascore by genre
+- Top directors by number of movies
+- Additional aggregations
 
+---
 
-Configure Grafana data source using internal service networking
+### 2️⃣ Daily Temperature Dataset (Optional Advanced Section)
 
+Daily minimum temperatures dataset (1981–1990), approximately 3,650 rows.
 
+This dataset was selected because it fits Rahti resource limits while enabling time-based analysis.
 
-Build analytical dashboards with aggregations and derived metrics
+Used for:
 
+- Daily time-series visualization
+- Monthly average temperature aggregation
+- Yearly temperature range (Max − Min)
+- 90th percentile temperature using ClickHouse quantile function
 
+---
 
-Technologies Used
+## 🧮 Example SQL Queries
 
+### Yearly Temperature Range
 
-
-OpenShift (CSC Rahti)
-
-
-
-ClickHouse (columnar database)
-
-
-
-Grafana (data visualization)
-
-
-
-YAML (Kubernetes deployment configs)
-
-
-
-SQL (analytical queries)
-
-
-
-Git \& GitHub (version control)
-
-
-
-Project Structure
-
-cloud-native-visual-analytics-assignment6
-
-│
-
-├── README.md
-
-├── report/
-
-│   └── Assignment6\_Report.pdf
-
-│
-
-├── screenshots/
-
-│   ├── clickhouse-pods.png
-
-│   ├── clickhouse-query.png
-
-│   ├── grafana-datasource-working.png
-
-│   ├── dashboard-movies.png
-
-│   └── dashboard-temperature.png
-
-│
-
-├── sql/
-
-│   ├── movies\_table.sql
-
-│   ├── movies\_queries.sql
-
-│   ├── temperature\_table.sql
-
-│   └── temperature\_queries.sql
-
-│
-
-├── yaml/
-
-│   ├── clickhouse-rahti.yaml
-
-│   └── grafana-rahti.yaml
-
-
-
-Dataset 1 — Movies (Metacritic Dataset)
-
-
-
-The first dataset contains movie information including:
-
-
-
-Title
-
-
-
-Year
-
-
-
-Genre
-
-
-
-Director
-
-
-
-Metascore
-
-
-
-The dataset was imported into ClickHouse using SQL and analyzed with aggregations such as:
-
-
-
-Movies per year
-
-
-
-Average metascore by genre
-
-
-
-Top directors by number of movies
-
-
-
-Dataset 2 — Daily Minimum Temperatures (Optional Section)
-
-
-
-The optional section includes a time-series dataset containing daily minimum temperatures from 1981–1990 (~3,650 rows).
-
-
-
-This dataset demonstrates:
-
-
-
-Time-based aggregation
-
-
-
-Group-by dimensions
-
-
-
-Derived metrics (average, range)
-
-
-
-Advanced statistical metric using quantile(0.9)
-
-
-
-Example advanced query:
-
-
-
+```sql
 SELECT
-
-&nbsp;   toYear(date) as year,
-
-&nbsp;   quantile(0.9)(temperature) as p90\_temp
-
-FROM analytics.daily\_temperatures
-
+    toYear(date) AS year,
+    max(temperature) - min(temperature) AS yearly_range
+FROM analytics.daily_temperatures
 GROUP BY year
-
 ORDER BY year;
-
-
-
-Deployment Summary
-
-ClickHouse
-
-
-
-Deployed using provided YAML
-
-
-
-Exposed via OpenShift Route
-
-
-
-MergeTree tables created
-
-
-
-CSV datasets imported via SQL
-
-
-
-Grafana
-
-
-
-Deployed in same OpenShift App (Shift + Drag in Topology)
-
-
-
-ClickHouse data source configured using internal service DNS
-
-
-
-Verified with "Data source is working"
-
-
-
-Multiple dashboards created
-
-
-
-Key Learning Outcomes
-
-
-
-Deploying containerized applications on OpenShift
-
-
-
-Managing internal service networking
-
-
-
-Writing analytical SQL queries in ClickHouse
-
-
-
-Implementing time-series and statistical aggregations
-
-
-
-Building professional dashboards in Grafana
-
-
-
-Handling cloud resource constraints
-
-
-
-Reproducibility
-
-
-
-To redeploy:
-
-
-
-Apply YAML files from /yaml
-
-
-
-Create tables using SQL files from /sql
-
-
-
-Import datasets
-
-
-
-Configure Grafana data source
-
-
-
-Import dashboards (if exported JSON is included)
-
-
-
-Author
-
-
-
-Hamed Ahmadinia
-
-Cloud Native Visual Analytics
-
-Arcada MIND
-
+```
+
+### 90th Percentile Temperature
+
+```sql
+SELECT
+    toYear(date) AS year,
+    quantile(0.9)(temperature) AS p90_temp
+FROM analytics.daily_temperatures
+GROUP BY year
+ORDER BY year;
+```
+
+### Movies Per Year
+
+```sql
+SELECT
+    year,
+    count() AS total_movies
+FROM movies.metacritic_movies
+GROUP BY year
+ORDER BY year;
+```
+
+---
+
+## 📷 Screenshots
+
+All verification screenshots are included in the `/screenshots` folder, showing:
+
+- OpenShift Pods running (ClickHouse + Grafana)
+- OpenShift Topology view (same App/network)
+- ClickHouse table creation and query results
+- Grafana data source showing “Data source is working”
+- Movies dashboard
+- Temperature analytics dashboard
+
+---
+
+## 📁 Project Structure
+
+```
+cloud-native-visual-analytics-assignment6
+│
+├── README.md
+├── report/
+│   └── Assignment6_Report.pdf
+│
+├── screenshots/
+│
+├── sql/
+│   ├── movies_table.sql
+│   ├── movies_queries.sql
+│   ├── temperature_table.sql
+│   └── temperature_queries.sql
+│
+├── yaml/
+│   ├── clickhouse-rahti.yaml
+│   └── grafana-rahti.yaml
+```
+
+---
+
+## ⚙ Technologies Used
+
+- OpenShift (CSC Rahti)
+- ClickHouse
+- Grafana
+- SQL
+- YAML
+- Git & GitHub
+
+---
+
+## ✅ Requirements Covered
+
+✔ ClickHouse deployed and verified  
+✔ Grafana deployed and connected internally  
+✔ Dataset imports validated  
+✔ Multiple dashboards created  
+✔ Time-based aggregations implemented  
+✔ Group-by dimensions implemented  
+✔ Derived metrics (average, range, percentile) implemented  
+
+---
+
+## 👤 Author
+
+Hamed Ahmadinia  
+Cloud Native Visual Analytics — Arcada MIND
