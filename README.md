@@ -160,4 +160,4 @@ cloud-native-visual-analytics-assignment6
 ## 👤 Author
 
 Hamed Ahmadinia  
-Cloud Native Visual Analytics — Arcada MIND
+Cloud Native Visual Analytics
